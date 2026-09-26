@@ -205,8 +205,5 @@ Agents communicate via:
 
 ---
 
-**Built with ❤️ for modern sales teams**
+> Originally based on [KlementMultiverse/ai-crm-agents](https://github.com/KlementMultiverse/ai-crm-agents) (MIT License). This repo is my continuation of that project. See the commit history for my changes.
 
-**License:** MIT
-**Status:** 🚧 In Development
-**Last Updated:** 2025-10-09
