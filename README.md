@@ -205,5 +205,5 @@ Agents communicate via:
 
 ---
 
-> Originally based on [KlementMultiverse/ai-crm-agents](https://github.com/KlementMultiverse/ai-crm-agents) (MIT License). This repo is my continuation of that project. See the commit history for my changes.
+
 
