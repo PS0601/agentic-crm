@@ -94,12 +94,19 @@ class EmailIntelligenceAgent(BaseAgent):
         4. Urgency level (low/medium/high)
         5. Key concerns or pain points
 
-        Return as JSON format.
+        Return ONLY a JSON object with exactly these keys:
+        {{"score": <1-10>, "label": "positive|neutral|negative",
+         "emotion": "anger|frustration|happiness|excitement|neutral",
+         "urgency": "low|medium|high", "concerns": ["...", "..."]}}
         """
 
         sentiment_response = await self.think(sentiment_prompt)
 
-        # Parse sentiment data
+        # Parse sentiment data (JSON first, then the loose text extractors)
+        parsed = self._parse_sentiment_json(sentiment_response)
+        if parsed:
+            return parsed
+
         sentiment = {
             "score": self._extract_sentiment_score(sentiment_response),
             "label": self._extract_sentiment_label(sentiment_response),
@@ -251,6 +258,38 @@ class EmailIntelligenceAgent(BaseAgent):
         # Query CRM for past interactions
         # Placeholder implementation
         return "First-time contact, no previous interactions"
+
+    def _parse_sentiment_json(self, text: str):
+        """Parse a JSON sentiment reply; returns None if it is not valid JSON."""
+        import json
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            if cleaned.lower().startswith("json"):
+                cleaned = cleaned[4:]
+        start, end = cleaned.find("{"), cleaned.rfind("}")
+        if start == -1 or end <= start:
+            return None
+        try:
+            data = json.loads(cleaned[start:end + 1])
+        except ValueError:
+            return None
+        try:
+            score = max(1, min(10, int(data.get("score"))))
+        except (TypeError, ValueError):
+            return None
+        label = str(data.get("label", "neutral")).lower()
+        if label not in ("positive", "neutral", "negative"):
+            label = "neutral"
+        emotion = str(data.get("emotion", "neutral")).lower()
+        if emotion not in ("anger", "frustration", "happiness", "excitement", "neutral"):
+            emotion = "neutral"
+        urgency = str(data.get("urgency", "medium")).lower()
+        if urgency not in ("low", "medium", "high"):
+            urgency = "medium"
+        concerns = [str(c) for c in (data.get("concerns") or [])][:3]
+        return {"score": score, "label": label, "emotion": emotion,
+                "urgency": urgency, "concerns": concerns}
 
     def _extract_sentiment_score(self, text: str) -> int:
         """Extract sentiment score from LLM response"""

@@ -16,6 +16,7 @@ if __name__ == "__main__":
     print("  🤖 AI-Powered CRM - Starting Server")
     print("=" * 70)
     print()
+    print("  Dashboard:  http://localhost:8000/dashboard")
     print("  API Server: http://localhost:8000")
     print("  API Docs:   http://localhost:8000/docs")
     print("  Health:     http://localhost:8000/health")

@@ -1,5 +1,8 @@
 """FastAPI Main Application - AI-Powered CRM"""
 
+from dotenv import load_dotenv
+load_dotenv()  # read .env before anything else reads os.environ
+
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -8,7 +11,9 @@ import uvicorn
 
 from database.models import Base, Contact, Deal, Customer, Email, Meeting
 from database.connection import engine, get_db
-from api import leads, deals, customers, emails, meetings, analytics
+from api import leads, deals, customers, emails, meetings, analytics, dashboard
+from fastapi.responses import FileResponse, RedirectResponse
+from pathlib import Path
 from workflows.orchestrator import AgentOrchestrator
 
 # Create database tables
@@ -70,6 +75,19 @@ app.include_router(customers.router, prefix="/api/customers", tags=["Customers"]
 app.include_router(emails.router, prefix="/api/emails", tags=["Emails"])
 app.include_router(meetings.router, prefix="/api/meetings", tags=["Meetings"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+
+
+# ============================================================================
+# DASHBOARD UI (static single-page app)
+# ============================================================================
+
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard_page():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 # ============================================================================

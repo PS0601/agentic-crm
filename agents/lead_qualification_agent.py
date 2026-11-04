@@ -147,13 +147,14 @@ class LeadQualificationAgent(BaseAgent):
         - Decision-maker involvement
         - Pain point mentions
 
-        Return list of identified signals.
+        Return a short bullet list, one signal per line, at most 5. If there are none, return exactly: None
         """
 
         signals_text = await self.think(signals_prompt)
 
         # Parse signals
-        signals = [s.strip() for s in signals_text.split("\n") if s.strip()]
+        signals = [s.strip().lstrip("-•*0123456789. ").strip() for s in signals_text.split("\n") if s.strip()]
+        signals = [s for s in signals if s and s.lower() != "none"][:5]
 
         return signals
 

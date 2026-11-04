@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1F4;
+    --surface: #FFFFFF;
+    --ink: #1B2433;
+    --muted: #5A6779;
+    --line: #D8DEE6;
+    --line-soft: #E7EBF0;
+    --accent: #2F4FD0;
+    --accent-soft: #E4E9FB;
+    --good: #23805A;
+    --good-soft: #DDF1E7;
+    --warn: #A86A00;
+    --warn-soft: #FBEBC8;
+    --bad: #B83A2B;
+    --bad-soft: #F8DDD8;
+    --s-prospecting: #C9D6F8;
+    --s-qualification: #9DB4F0;
+    --s-proposal: #6F8DE6;
+    --s-negotiation: #3F5FD6;
+    --s-won: #23805A;
+    --radius: 8px;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  h1, h2, h3, p { margin: 0; }
+
+  /* ---------- shell ---------- */
+  .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+  .rail {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 22px 14px;
+    display: flex; flex-direction: column; gap: 22px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+  .brand-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); position: relative; flex: none; }
+  .brand-mark::after { content: ""; position: absolute; inset: 6px 5px 6px 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: skewY(-18deg); }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav a {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500;
+  }
+  .nav a:hover { background: var(--bg); color: var(--ink); }
+  .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .nav .count { font-size: 13px; color: var(--muted); }
+  .nav a[aria-current="page"] .count { color: var(--accent); }
+  .rail-foot { margin-top: auto; padding: 0 8px; font-size: 13px; color: var(--muted); }
+  .llm-badge { display: flex; gap: 8px; align-items: flex-start; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; background: var(--muted); }
+  .dot.live { background: var(--good); }
+  .dot.mock { background: var(--warn); }
+  .llm-badge b { display: block; color: var(--ink); font-weight: 600; }
+
+  main { min-width: 0; padding: 32px clamp(16px, 4vw, 48px) 64px; max-width: 1280px; width: 100%; }
+  .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .page-head h1 { font-size: 26px; letter-spacing: -0.02em; font-weight: 700; }
+  .page-head p { color: var(--muted); margin-top: 2px; }
+
+  /* ---------- controls ---------- */
+  .btn {
+    border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 6px;
+    cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { border-color: #b9c2cf; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #2742b3; }
+  .btn:disabled { opacity: .6; cursor: progress; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .field input, .field select, .field textarea {
+    border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 8px 10px; width: 100%;
+  }
+  .field textarea { min-height: 110px; resize: vertical; }
+  .search { max-width: 280px; }
+
+  /* ---------- overview ---------- */
+  .pipeline-headline { font-size: clamp(24px, 3.4vw, 38px); line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; max-width: 22em; }
+  .pipeline-headline span { color: var(--muted); font-weight: 500; }
+  .strip-wrap { margin: 26px 0 8px; display: flex; gap: 22px; align-items: flex-start; }
+  .strip { display: flex; gap: 3px; flex: 1; min-width: 0; }
+  .strip.closed { flex: 0 0 auto; }
+  .seg { min-width: 96px; display: flex; flex-direction: column; gap: 8px; }
+  .seg .bar { height: 46px; border-radius: 4px; transform-origin: left center; }
+  .seg .lbl { font-size: 13px; color: var(--muted); line-height: 1.35; }
+  .seg .lbl b { display: block; color: var(--ink); font-weight: 600; font-size: 15px; }
+  .divider { width: 1px; align-self: stretch; background: var(--line); margin-top: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .seg .bar { animation: grow .8s cubic-bezier(.2,.7,.2,1) both; }
+    .seg:nth-child(2) .bar { animation-delay: .08s; }
+    .seg:nth-child(3) .bar { animation-delay: .16s; }
+    .seg:nth-child(4) .bar { animation-delay: .24s; }
+    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  }
+
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); margin: 34px 0 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .fact { padding: 16px 18px 16px 0; }
+  .fact + .fact { padding-left: 18px; border-left: 1px solid var(--line); }
+  .fact .v { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .fact .l { color: var(--muted); font-size: 13px; }
+
+  .two-col { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; margin-top: 34px; }
+  .section-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .section-sub { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+  .rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .rows li { border-bottom: 1px solid var(--line-soft); }
+  .rows a, .rows .row {
+    display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
+    padding: 11px 4px; text-decoration: none; color: inherit;
+  }
+  .rows a:hover { background: rgba(255,255,255,.7); }
+  .rows.plain a, .rows.plain .row { grid-template-columns: 1fr auto; }
+  .rows a > .pill { justify-self: start; }
+  .row-main { min-width: 0; }
+  .row-main .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-main .s { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-end { text-align: right; font-weight: 600; }
+  .row-end small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+  .empty { color: var(--muted); padding: 18px 4px; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 13px; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; }
+  .cell-main { font-weight: 600; }
+  .cell-sub { color: var(--muted); font-size: 13px; }
+  .meter { display: flex; align-items: center; gap: 10px; min-width: 130px; }
+  .meter .track { flex: 1; height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; }
+  .meter .fill { height: 100%; border-radius: 3px; }
+  .meter .n { width: 28px; text-align: right; font-weight: 600; }
+  .good { --c: var(--good); } .warn { --c: var(--warn); } .bad { --c: var(--bad); }
+  .fill { background: var(--c); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--line-soft); color: var(--muted); }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.accent { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- panels (forms, results) ---------- */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 17px; margin-bottom: 4px; }
+  .panel .hint { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .form-actions { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  .notice { font-size: 13px; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 8px 10px; margin-bottom: 14px; }
+  .error { font-size: 14px; color: var(--bad); background: var(--bad-soft); border-radius: 6px; padding: 8px 10px; margin-top: 12px; }
+  .result { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; display: grid; grid-template-columns: auto 1fr; gap: 6px 24px; }
+  .result .big { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; grid-row: span 3; padding-right: 8px; }
+  .result .big small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0; margin-top: 6px; }
+  .result ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); }
+
+  /* ---------- deals board ---------- */
+  .board { display: grid; grid-template-columns: repeat(5, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+  .col-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px 8px; border-bottom: 3px solid var(--sc, var(--line)); margin-bottom: 10px; }
+  .col-head b { font-weight: 700; }
+  .col-head span { color: var(--muted); font-size: 13px; }
+  .deal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; }
+  .deal .n { font-weight: 600; line-height: 1.3; }
+  .deal .c { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .deal .v { display: flex; justify-content: space-between; font-weight: 600; }
+  .deal .v small { color: var(--muted); font-weight: 400; }
+  .deal .meter { margin-top: 8px; min-width: 0; }
+  .deal .flag { margin-top: 8px; }
+  .deal.lost { opacity: .6; }
+
+  /* ---------- inbox ---------- */
+  .inbox { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 20px; align-items: start; }
+  .mail-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .mail-item { display: grid; grid-template-columns: auto 1fr; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line-soft); padding: 12px 14px; cursor: pointer; }
+  .mail-item:last-child { border-bottom: 0; }
+  .mail-item:hover { background: var(--bg); }
+  .mail-item[aria-selected="true"] { background: var(--accent-soft); }
+  .mail-item .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-item .s { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .mail-detail h2 { font-size: 20px; letter-spacing: -0.01em; }
+  .mail-detail .from { color: var(--muted); margin: 2px 0 14px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .quote { border-left: 3px solid var(--line); padding-left: 14px; color: var(--muted); white-space: pre-wrap; margin-bottom: 20px; max-width: 70ch; }
+  .draft-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .draft { background: var(--bg); border-radius: 6px; padding: 14px 16px; white-space: pre-wrap; max-width: 70ch; }
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .rail { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 12px 16px; gap: 10px 16px; }
+    .nav { flex-direction: row; flex-wrap: wrap; }
+    .nav .count { display: none; }
+    .rail-foot { margin: 0; flex-basis: 100%; }
+    .facts { grid-template-columns: 1fr 1fr; }
+    .fact:nth-child(3) { border-left: 0; padding-left: 0; }
+    .fact:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .two-col, .inbox { grid-template-columns: 1fr; gap: 28px; }
+    .strip-wrap { flex-direction: column; }
+    .strip { width: 100%; overflow-x: auto; }
+    .divider { display: none; }
+    .result { grid-template-columns: 1fr; }
+    .result .big { grid-row: auto; }
+  }
+  .loading { color: var(--muted); padding: 40px 0; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Agentic CRM</div>
+    <nav class="nav" aria-label="Sections" id="nav"></nav>
+    <div class="rail-foot">
+      <div class="llm-badge" id="llm-badge"></div>
+    </div>
+  </aside>
+  <main id="app" tabindex="-1"><p class="loading">Loading your CRM…</p></main>
+</div>
+
+<script>
+"use strict";
+
+const STAGES = [
+  { key: "prospecting",   label: "Prospecting",   color: "var(--s-prospecting)" },
+  { key: "qualification", label: "Qualification", color: "var(--s-qualification)" },
+  { key: "proposal",      label: "Proposal",      color: "var(--s-proposal)" },
+  { key: "negotiation",   label: "Negotiation",   color: "var(--s-negotiation)" },
+];
+const VIEWS = ["overview", "leads", "deals", "customers", "inbox"];
+const TITLES = { overview: "Overview", leads: "Leads", deals: "Deals", customers: "Customers", inbox: "Inbox" };
+
+let data = null;
+let selectedEmail = null;
+let leadQuery = "";
+let ui = { leadFormOpen: false, emailFormOpen: false, leadResult: null, emailResult: null };
+
+/* ---------- helpers ---------- */
+const $ = (sel) => document.querySelector(sel);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function money(n) {
+  n = Number(n) || 0;
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M";
+  if (n >= 1e3) return "$" + Math.round(n / 1e3) + "K";
+  return "$" + Math.round(n);
+}
+function moneyFull(n) { return "$" + Math.round(Number(n) || 0).toLocaleString("en-US"); }
+function healthClass(n) { return n >= 75 ? "good" : n >= 50 ? "warn" : "bad"; }
+function scoreClass(n) { return n >= 80 ? "good" : n >= 60 ? "good" : n >= 40 ? "warn" : "bad"; }
+function ago(iso) {
+  if (!iso) return "";
+  const d = (Date.now() - new Date(iso + (iso.endsWith("Z") ? "" : "Z")).getTime()) / 86400000;
+  if (d < 1) return "today";
+  if (d < 2) return "yesterday";
+  if (d < 30) return Math.floor(d) + " days ago";
+  return Math.floor(d / 30) + " mo ago";
+}
+function meter(n, cls) {
+  const v = Math.max(0, Math.min(100, Number(n) || 0));
+  return `<div class="meter ${cls || healthClass(v)}"><div class="track"><div class="fill" style="width:${v}%"></div></div><span class="n">${v}</span></div>`;
+}
+function sentimentClass(s) { return s === "positive" ? "good" : s === "negative" ? "bad" : ""; }
+function priorityClass(p) { return p === "high" ? "bad" : p === "medium" ? "warn" : ""; }
+function stageLabel(k) { return (STAGES.find((s) => s.key === k) || {}).label || k.replace("_", " "); }
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch (_) {}
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return res.json();
+}
+
+async function load() {
+  data = await api("/api/dashboard/summary");
+  renderChrome();
+  render();
+}
+
+/* ---------- chrome (nav + AI mode) ---------- */
+function renderChrome() {
+  const k = data.kpis;
+  const counts = { leads: data.leads.length, deals: k.open_deals, customers: data.customers.length, inbox: data.emails.length };
+  const current = currentView();
+  $("#nav").innerHTML = VIEWS.map((v) =>
+    `<a href="#${v}" ${v === current ? 'aria-current="page"' : ""}><span>${TITLES[v]}</span>${counts[v] != null ? `<span class="count">${counts[v]}</span>` : ""}</a>`
+  ).join("");
+
+  const live = data.llm.provider === "claude";
+  $("#llm-badge").innerHTML = live
+    ? `<span class="dot live"></span><span><b>Agents run on Claude</b>${esc(data.llm.model)}</span>`
+    : `<span class="dot mock"></span><span><b>Demo mode</b>No API key set, so live agent results are placeholders.</span>`;
+}
+
+function currentView() {
+  const h = location.hash.replace("#", "");
+  return VIEWS.includes(h) ? h : "overview";
+}
+
+/* ---------- overview ---------- */
+function viewOverview() {
+  const k = data.kpis;
+  const open = data.deals.filter((d) => STAGES.some((s) => s.key === d.stage));
+  const byStage = STAGES.map((s) => {
+    const ds = open.filter((d) => d.stage === s.key);
+    return { ...s, value: ds.reduce((a, d) => a + d.value, 0), count: ds.length };
+  });
+  const total = byStage.reduce((a, s) => a + s.value, 0) || 1;
+  const won = data.deals.filter((d) => d.stage === "closed_won");
+  const wonValue = won.reduce((a, d) => a + d.value, 0);
+
+  const strip = byStage.map((s) =>
+    `<div class="seg" style="flex:${Math.max(s.value / total, 0.08)}" title="${esc(s.label)}: ${moneyFull(s.value)}">
+       <div class="bar" style="background:${s.color}"></div>
+       <div class="lbl"><b>${money(s.value)}</b>${esc(s.label)} · ${s.count} ${s.count === 1 ? "deal" : "deals"}</div>
+     </div>`).join("");
+
+  // things that need a person
+  const stalled = data.deals.filter((d) => d.is_stalled && STAGES.some((s) => s.key === d.stage));
+  const risky = data.customers.filter((c) => c.churn_risk === "high" || c.churn_risk === "medium")
+    .sort((a, b) => b.churn_probability - a.churn_probability).slice(0, 4);
+  const angry = data.emails.filter((e) => e.sentiment === "negative").slice(0, 3);
+
+  const attn = [
+    ...stalled.map((d) => `<li><a href="#deals"><span class="pill warn">Stalled</span><span class="row-main"><div class="t">${esc(d.name)}</div><div class="s">${esc(d.notes || "No recent activity")}</div></span><span class="row-end">${money(d.value)}<small>${stageLabel(d.stage)}</small></span></a></li>`),
+    ...risky.map((c) => `<li><a href="#customers"><span class="pill ${c.churn_risk === "high" ? "bad" : "warn"}">${c.churn_risk === "high" ? "Churn risk" : "Watch"}</span><span class="row-main"><div class="t">${esc(c.company)}</div><div class="s">${c.churn_probability}% churn probability · health ${c.health_score}</div></span><span class="row-end">${money(c.mrr)}<small>per month</small></span></a></li>`),
+    ...angry.map((e) => `<li><a href="#inbox" data-email="${esc(e.id)}"><span class="pill bad">Upset</span><span class="row-main"><div class="t">${esc(e.subject)}</div><div class="s">${esc(e.from)}</div></span><span class="row-end">${esc(ago(e.created_at))}<small>draft ready</small></span></a></li>`),
+  ];
+
+  const hot = data.leads.filter((l) => l.score >= 80).slice(0, 5);
+
+  return `
+    <div class="page-head"><div><h1>Overview</h1><p>What the six agents are tracking right now.</p></div></div>
+    <h2 class="pipeline-headline">${money(k.pipeline_value)} open across ${k.open_deals} deals, <span>about ${money(k.forecast_value)} likely to close.</span></h2>
+    <div class="strip-wrap">
+      <div class="strip" role="img" aria-label="Open pipeline value by stage">${strip}</div>
+      <div class="divider"></div>
+      <div class="strip closed"><div class="seg" title="Closed won: ${moneyFull(wonValue)}"><div class="bar" style="background:var(--s-won)"></div><div class="lbl"><b>${money(wonValue)}</b>Won · ${won.length} deals</div></div></div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><div class="v">${money(k.mrr)}</div><div class="l">Monthly recurring revenue</div></div>
+      <div class="fact"><div class="v">${money(k.arr)}</div><div class="l">Annual run rate</div></div>
+      <div class="fact"><div class="v">${k.leads_qualified} of ${k.leads_total}</div><div class="l">Leads scored 60 or higher</div></div>
+      <div class="fact"><div class="v">${k.avg_customer_health}</div><div class="l">Average customer health</div></div>
+    </div>
+
+    <div class="two-col">
+      <section>
+        <h3 class="section-title">Needs a person</h3>
+        <p class="section-sub">Flagged by the Sales Pipeline, Customer Success and Email agents.</p>
+        ${attn.length ? `<ul class="rows">${attn.join("")}</ul>` : `<p class="empty">Nothing is flagged. Agents will list stalled deals, at-risk customers and upset emails here.</p>`}
+      </section>
+      <section>
+        <h3 class="section-title">Hottest leads</h3>
+        <p class="section-sub">Scored 80 or higher by the Lead Qualification agent.</p>
+        ${hot.length ? `<ul class="rows plain">${hot.map((l) => `<li><a href="#leads"><span class="row-main"><div class="t">${esc(l.name)}</div><div class="s">${esc(l.job_title || "")}${l.company ? " · " + esc(l.company) : ""}</div></span><span class="row-end">${l.score}<small>${esc(l.status)}</small></span></a></li>`).join("")}</ul>` : `<p class="empty">No leads above 80 yet. Add a lead to see the agent score it.</p>`}
+      </section>
+    </div>`;
+}
+
+/* ---------- leads ---------- */
+function viewLeads() {
+  const q = leadQuery.trim().toLowerCase();
+  const rows = data.leads.filter((l) => !q || [l.name, l.email, l.company, l.job_title, l.status].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => b.score - a.score);
+  const r = ui.leadResult;
+
+  return `
+    <div class="page-head">
+      <div><h1>Leads</h1><p>${data.leads.length} leads, scored 0 to 100 by the Lead Qualification agent.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="field search"><label class="sr" for="lead-search" style="position:absolute;left:-9999px">Search leads</label><input id="lead-search" type="search" placeholder="Search leads" value="${esc(leadQuery)}"></div>
+        <button class="btn primary" id="toggle-lead">${ui.leadFormOpen ? "Close form" : "Add lead"}</button>
+      </div>
+    </div>
+    ${ui.leadFormOpen ? leadForm() : ""}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Lead</th><th>Score</th><th>Routed to</th><th>Source</th><th>Added</th></tr></thead>
+      <tbody>
+      ${rows.length ? rows.map((l) => `<tr>
+        <td><div class="cell-main">${esc(l.name)}</div><div class="cell-sub">${esc(l.job_title || "")}${l.company ? " · " + esc(l.company) : ""}</div></td>
+        <td>${meter(l.score, scoreClass(l.score))}</td>
+        <td><span class="pill ${l.score >= 80 ? "accent" : ""}">${esc(l.status || "Unrouted")}</span></td>
+        <td>${esc(l.source || "")}</td>
+        <td>${esc(ago(l.created_at))}</td>
+      </tr>`).join("") : `<tr><td colspan="5" class="empty">No leads match "${esc(leadQuery)}".</td></tr>`}
+      </tbody></table></div>`;
+}
+
+function leadForm() {
+  const r = ui.leadResult;
+  return `<form class="panel" id="lead-form">
+    <h2>Add a lead</h2>
+    <p class="hint">The Lead Qualification agent scores it, finds buying signals and routes it to a team.</p>
+    ${data.llm.provider !== "claude" ? `<div class="notice">Demo mode: with no API key the agent returns a placeholder score of 50 for every lead.</div>` : ""}
+    <div class="form-grid">
+      <div class="field"><label for="lf-email">Email</label><input id="lf-email" name="email" type="email" required placeholder="name@company.com"></div>
+      <div class="field"><label for="lf-first">First name</label><input id="lf-first" name="first_name"></div>
+      <div class="field"><label for="lf-last">Last name</label><input id="lf-last" name="last_name"></div>
+      <div class="field"><label for="lf-title">Job title</label><input id="lf-title" name="job_title" placeholder="VP of Engineering"></div>
+      <div class="field"><label for="lf-company">Company</label><input id="lf-company" name="company_name"></div>
+    </div>
+    <div class="form-actions"><button class="btn primary" type="submit" id="lead-submit">Score this lead</button></div>
+    <div id="lead-error"></div>
+    ${r ? `<div class="result">
+      <div class="big">${r.score}<small>score</small></div>
+      <div><span class="pill accent">${esc(r.team)}</span> <span class="pill ${priorityClass(r.priority)}">${esc(r.priority || "")} priority</span></div>
+      <div>${esc(r.recommended_action || "")}</div>
+      <div>${(r.signals || []).length ? `<ul>${r.signals.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : `<span class="cell-sub">No buying signals found.</span>`}</div>
+    </div>` : ""}
+  </form>`;
+}
+
+/* ---------- deals ---------- */
+function viewDeals() {
+  const cols = [...STAGES, { key: "closed", label: "Closed", color: "var(--s-won)" }];
+  const html = cols.map((c) => {
+    const ds = c.key === "closed" ? data.deals.filter((d) => d.stage.startsWith("closed")) : data.deals.filter((d) => d.stage === c.key);
+    const sum = ds.filter((d) => d.stage !== "closed_lost").reduce((a, d) => a + d.value, 0);
+    return `<section style="--sc:${c.color}"><div class="col-head"><b>${c.label}</b><span>${money(sum)} · ${ds.length}</span></div>
+      ${ds.map((d) => `<article class="deal ${d.stage === "closed_lost" ? "lost" : ""}">
+        <div class="n">${esc(d.name)}</div>
+        <div class="c">${esc(d.company || "")}${d.contact ? " · " + esc(d.contact) : ""}</div>
+        <div class="v"><span>${moneyFull(d.value)}</span><small>${d.stage === "closed_won" ? "Won" : d.stage === "closed_lost" ? "Lost" : d.probability + "% likely"}</small></div>
+        ${d.stage.startsWith("closed") ? "" : meter(d.health_score) + (d.is_stalled ? `<div class="flag"><span class="pill warn">Stalled</span></div>` : "")}
+      </article>`).join("") || `<p class="cell-sub">No deals.</p>`}
+    </section>`;
+  }).join("");
+  return `<div class="page-head"><div><h1>Deals</h1><p>${money(data.kpis.pipeline_value)} open. The bar under each deal is its health score, as judged by the Sales Pipeline agent.</p></div></div><div class="board">${html}</div>`;
+}
+
+/* ---------- customers ---------- */
+function viewCustomers() {
+  const rows = [...data.customers].sort((a, b) => a.health_score - b.health_score);
+  return `
+    <div class="page-head"><div><h1>Customers</h1><p>${data.kpis.at_risk_customers} of ${data.customers.length} customers are at medium or high churn risk. Lowest health first.</p></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Customer</th><th>Health</th><th>Churn risk</th><th class="num">MRR</th><th class="num">License use</th><th class="num">Tickets (30 days)</th><th class="num">NPS</th></tr></thead>
+      <tbody>${rows.map((c) => `<tr>
+        <td><div class="cell-main">${esc(c.company)}</div><div class="cell-sub">${esc(c.plan)}</div></td>
+        <td>${meter(c.health_score)}</td>
+        <td><span class="pill ${c.churn_risk === "high" ? "bad" : c.churn_risk === "medium" ? "warn" : "good"}">${esc(c.churn_risk)}</span> <span class="cell-sub">${c.churn_probability}%</span></td>
+        <td class="num">${moneyFull(c.mrr)}</td>
+        <td class="num">${c.license_usage_percent}%</td>
+        <td class="num">${c.support_tickets_30d}</td>
+        <td class="num">${c.nps_score}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- inbox ---------- */
+function viewInbox() {
+  const emails = data.emails;
+  const sel = emails.find((e) => e.id === selectedEmail) || emails[0];
+  if (sel) selectedEmail = sel.id;
+  const r = ui.emailResult;
+
+  const form = ui.emailFormOpen ? `<form class="panel" id="email-form">
+    <h2>Analyze an email</h2>
+    <p class="hint">Paste a customer email. The Email Intelligence agent reads its sentiment, files it, sets a priority and drafts a reply.</p>
+    ${data.llm.provider !== "claude" ? `<div class="notice">Demo mode: with no API key the agent labels every email neutral and drafts a placeholder reply.</div>` : ""}
+    <div class="form-grid">
+      <div class="field"><label for="ef-from">From</label><input id="ef-from" name="sender" type="email" placeholder="customer@example.com"></div>
+      <div class="field"><label for="ef-subject">Subject</label><input id="ef-subject" name="subject"></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label for="ef-body">Message</label><textarea id="ef-body" name="body" required placeholder="I'm frustrated with the latest update. It broke our workflow."></textarea></div>
+    <div class="form-actions"><button class="btn primary" type="submit" id="email-submit">Analyze email</button></div>
+    <div id="email-error"></div>
+  </form>` : "";
+
+  const list = emails.map((e) => `<button class="mail-item" role="option" data-email="${esc(e.id)}" aria-selected="${e.id === selectedEmail}">
+      <span class="dot" style="background:${e.sentiment === "negative" ? "var(--bad)" : e.sentiment === "positive" ? "var(--good)" : "var(--muted)"}"></span>
+      <span style="min-width:0"><div class="t">${esc(e.subject || "(no subject)")}</div><div class="s">${esc(e.from || "")} · ${esc(ago(e.created_at))}</div></span></button>`).join("");
+
+  const detail = sel ? `<article class="mail-detail">
+      <h2>${esc(sel.subject || "(no subject)")}</h2>
+      <p class="from">${esc(sel.from || "")}</p>
+      <div class="chips">
+        <span class="pill ${sentimentClass(sel.sentiment)}">${esc(sel.sentiment || "unknown")}${sel.sentiment_score != null ? " " + sel.sentiment_score + "/10" : ""}</span>
+        <span class="pill">${esc((sel.category || "uncategorized").replace(/_/g, " "))}</span>
+        <span class="pill ${priorityClass(sel.priority)}">${esc(sel.priority || "")} priority</span>
+      </div>
+      <div class="quote">${esc(sel.body || "")}</div>
+      <div class="draft-head"><h3 class="section-title" style="margin:0">Drafted reply</h3><button class="btn" id="copy-draft">Copy draft</button></div>
+      <div class="draft" id="draft-text">${esc(sel.draft_response || "No draft yet.")}</div>
+    </article>` : `<div class="panel"><h2>No emails yet</h2><p class="hint">Analyze an email to see its sentiment, category and a drafted reply.</p></div>`;
+
+  return `
+    <div class="page-head"><div><h1>Inbox</h1><p>${data.kpis.negative_emails} upset ${data.kpis.negative_emails === 1 ? "email needs" : "emails need"} a human. Every reply is a draft; nothing is sent.</p></div>
+      <button class="btn primary" id="toggle-email">${ui.emailFormOpen ? "Close form" : "Analyze an email"}</button></div>
+    ${form}
+    <div class="inbox"><div class="mail-list" role="listbox" aria-label="Emails">${list}</div>${detail}</div>`;
+}
+
+/* ---------- render + events ---------- */
+function render() {
+  if (!data) return;
+  const v = currentView();
+  const views = { overview: viewOverview, leads: viewLeads, deals: viewDeals, customers: viewCustomers, inbox: viewInbox };
+  $("#app").innerHTML = views[v]();
+  document.title = `${TITLES[v]} · Agentic CRM`;
+  renderChrome();
+  bind();
+}
+
+function bind() {
+  const app = $("#app");
+
+  const search = $("#lead-search");
+  if (search) search.addEventListener("input", (e) => {
+    leadQuery = e.target.value; const pos = e.target.selectionStart; render();
+    const el = $("#lead-search"); el.focus(); el.setSelectionRange(pos, pos);
+  });
+
+  const tl = $("#toggle-lead");
+  if (tl) tl.addEventListener("click", () => { ui.leadFormOpen = !ui.leadFormOpen; ui.leadResult = null; render(); });
+  const te = $("#toggle-email");
+  if (te) te.addEventListener("click", () => { ui.emailFormOpen = !ui.emailFormOpen; render(); });
+
+  const lf = $("#lead-form");
+  if (lf) lf.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#lead-submit"); const err = $("#lead-error");
+    const body = Object.fromEntries([...new FormData(lf)].map(([k, v]) => [k, v.trim() || null]));
+    btn.disabled = true; btn.textContent = "Scoring…"; err.innerHTML = "";
+    try {
+      ui.leadResult = await api("/api/dashboard/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      data = await api("/api/dashboard/summary");
+      render();
+    } catch (ex) {
+      btn.disabled = false; btn.textContent = "Score this lead";
+      err.innerHTML = `<div class="error">${esc(ex.message)}</div>`;
+    }
+  });
+
+  const ef = $("#email-form");
+  if (ef) ef.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#email-submit"); const err = $("#email-error");
+    const body = Object.fromEntries([...new FormData(ef)].map(([k, v]) => [k, v.trim()]));
+    if (!body.sender) body.sender = "customer@example.com";
+    btn.disabled = true; btn.textContent = "Analyzing…"; err.innerHTML = "";
+    try {
+      const r = await api("/api/dashboard/emails", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      selectedEmail = r.id; ui.emailFormOpen = false;
+      data = await api("/api/dashboard/summary");
+      render();
+    } catch (ex) {
+      btn.disabled = false; btn.textContent = "Analyze email";
+      err.innerHTML = `<div class="error">${esc(ex.message)}</div>`;
+    }
+  });
+
+  app.querySelectorAll("[data-email]").forEach((el) => el.addEventListener("click", () => {
+    selectedEmail = el.dataset.email;
+    if (currentView() === "inbox") render();   // links from overview navigate via hash instead
+  }));
+
+  const copy = $("#copy-draft");
+  if (copy) copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#draft-text").textContent); copy.textContent = "Copied"; }
+    catch (_) { copy.textContent = "Copy failed"; }
+    setTimeout(() => { copy.textContent = "Copy draft"; }, 1500);
+  });
+}
+
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+load().catch((err) => {
+  $("#app").innerHTML = `<div class="panel"><h2>Can't reach the CRM API</h2><p class="hint">${esc(err.message)}. Check that the server is running (python run.py) and that PostgreSQL is up, then reload.</p></div>`;
+});
+</script>
+</body>
+</html>

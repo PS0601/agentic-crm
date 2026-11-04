@@ -8,3 +8,4 @@ redis
 email-validator
 python-multipart
 httpx
+anthropic

@@ -42,23 +42,9 @@ class AgentOrchestrator:
         }
 
     def _init_llm(self):
-        """Initialize LLM client"""
-        # Placeholder - implement with actual LLM
-        # Example: from langchain.llms import OpenAI
-        # return OpenAI(temperature=0.7)
-
-        # For now, return a mock object
-        class MockLLM:
-            async def agenerate(self, prompts):
-                class Generation:
-                    def __init__(self):
-                        self.text = "Mock LLM response"
-                class Generations:
-                    def __init__(self):
-                        self.generations = [[Generation()]]
-                return Generations()
-
-        return MockLLM()
+        """Initialize LLM client (Claude if ANTHROPIC_API_KEY is set, else mock)"""
+        from llm import get_llm
+        return get_llm()
 
     def get_agent_status(self) -> Dict[str, str]:
         """Get status of all agents"""
