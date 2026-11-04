@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from uuid import UUID
 from pydantic import BaseModel
 from database.connection import get_db
 from database.models import Customer
@@ -11,7 +12,7 @@ router = APIRouter()
 
 
 class CustomerResponse(BaseModel):
-    id: str
+    id: UUID
     plan: str
     mrr: float
     health_score: int

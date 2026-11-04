@@ -2,10 +2,11 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 from pydantic import BaseModel
 from database.connection import get_db
-from database.models import Contact
+from database.models import Contact, Company
 
 router = APIRouter()
 
@@ -20,12 +21,12 @@ class LeadCreate(BaseModel):
 
 
 class LeadResponse(BaseModel):
-    id: str
+    id: UUID
     email: str
-    first_name: str
-    last_name: str
-    lead_score: int
-    lead_status: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    lead_score: Optional[int] = None
+    lead_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -54,7 +55,16 @@ async def get_lead(lead_id: str, db: Session = Depends(get_db)):
 @router.post("/", response_model=LeadResponse)
 async def create_lead(lead: LeadCreate, db: Session = Depends(get_db)):
     """Create new lead"""
-    db_lead = Contact(**lead.dict())
+    data = lead.model_dump()
+    company_name = data.pop("company_name", None)
+    if company_name:
+        company = db.query(Company).filter(Company.name == company_name).first()
+        if not company:
+            company = Company(name=company_name)
+            db.add(company)
+            db.flush()
+        data["company_id"] = company.id
+    db_lead = Contact(**data)
     db.add(db_lead)
     db.commit()
     db.refresh(db_lead)

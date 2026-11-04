@@ -1,6 +1,7 @@
 """Analytics API Endpoints"""
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from database.connection import get_db
 from database.models import Deal, Contact, Customer
@@ -20,10 +21,10 @@ async def get_dashboard(db: Session = Depends(get_db)):
     # Revenue metrics
     total_pipeline = db.query(Deal).filter(
         Deal.stage.in_(['prospecting', 'qualification', 'proposal', 'negotiation'])
-    ).with_entities(db.func.sum(Deal.value)).scalar() or 0
+    ).with_entities(func.sum(Deal.value)).scalar() or 0
 
     total_mrr = db.query(Customer).with_entities(
-        db.func.sum(Customer.mrr)
+        func.sum(Customer.mrr)
     ).scalar() or 0
 
     return {
@@ -53,7 +54,7 @@ async def get_pipeline_metrics(db: Session = Depends(get_db)):
     for stage in stages:
         count = db.query(Deal).filter(Deal.stage == stage).count()
         value = db.query(Deal).filter(Deal.stage == stage).with_entities(
-            db.func.sum(Deal.value)
+            func.sum(Deal.value)
         ).scalar() or 0
 
         pipeline[stage] = {

@@ -27,7 +27,7 @@ class Company(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     enrichment_data = Column(JSONB)
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     contacts = relationship("Contact", back_populates="company")
@@ -60,7 +60,7 @@ class Contact(Base):
 
     # Enrichment
     enrichment_data = Column(JSONB)
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     company = relationship("Company", back_populates="contacts")
@@ -103,7 +103,7 @@ class Deal(Base):
 
     # Additional
     notes = Column(Text)
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     company = relationship("Company", back_populates="deals")
@@ -158,7 +158,7 @@ class Customer(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     company = relationship("Company", back_populates="customers")
@@ -197,7 +197,7 @@ class Email(Base):
     sent_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
 
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     contact = relationship("Contact", back_populates="emails")
@@ -236,7 +236,7 @@ class Meeting(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     deal = relationship("Deal", back_populates="meetings")
@@ -264,7 +264,7 @@ class Activity(Base):
     completed_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
 
-    metadata = Column(JSONB)
+    extra_metadata = Column("metadata", JSONB)
 
     # Relationships
     contact = relationship("Contact", back_populates="activities")
