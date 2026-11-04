@@ -152,6 +152,7 @@ class LeadIn(BaseModel):
     last_name: Optional[str] = None
     job_title: Optional[str] = None
     company_name: Optional[str] = None
+    message: Optional[str] = None  # what the lead actually said; the agent finds signals in it
     lead_source: Optional[str] = "dashboard"
 
 

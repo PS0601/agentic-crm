@@ -78,19 +78,28 @@ class LeadQualificationAgent(BaseAgent):
         # Extract company domain from email
         domain = email.split("@")[-1] if "@" in email else ""
 
-        # Use LLM to enrich data
+        # Use LLM to enrich data. The model has no internet access here, so the
+        # prompt restricts it to the lead's own details and allows "unknown".
+        name = lead_data.get("name") or " ".join(
+            x for x in [lead_data.get("first_name"), lead_data.get("last_name")] if x
+        ) or "Unknown"
         enrichment_prompt = f"""
-        Analyze this lead and provide enrichment data:
+        Assess this lead using ONLY the information below. You have no internet
+        access, so do not invent facts about the company or person. If something
+        cannot be determined from this data, answer "unknown".
 
         Email: {email}
-        Name: {lead_data.get('name', 'Unknown')}
-        Company Domain: {domain}
+        Name: {name}
+        Job title: {lead_data.get('job_title') or 'not provided'}
+        Company: {lead_data.get('company_name') or 'not provided'}
+        Company domain: {domain}
+        Message from the lead: {lead_data.get('message') or 'none'}
 
         Provide:
-        1. Likely company size (small/medium/large/enterprise)
-        2. Industry classification
-        3. Job title seniority (entry/mid/senior/executive)
-        4. Budget likelihood (low/medium/high)
+        1. Likely company size (small/medium/large/enterprise/unknown)
+        2. Industry classification (or unknown)
+        3. Job title seniority (entry/mid/senior/executive/unknown)
+        4. Budget likelihood (low/medium/high/unknown)
 
         Return as JSON.
         """
@@ -121,6 +130,9 @@ class LeadQualificationAgent(BaseAgent):
         - Engagement (15%): Multiple touchpoints, content downloads
         - Budget signals (15%): Mentions pricing, demo requests, timeline questions
 
+        Base the score only on the data above. Missing information should
+        lower your confidence, not be filled in with guesses.
+
         Return ONLY the numeric score (0-100).
         """
 
@@ -139,15 +151,18 @@ class LeadQualificationAgent(BaseAgent):
 
         {lead_data}
 
-        Look for:
+        A signal counts ONLY if something in the data backs it up: the lead's own
+        message, their job title, or their stated company. Do not guess or assume.
+        Possible signals:
         - Timeline mentions ("need by Q4", "urgent")
-        - Budget questions ("pricing", "cost")
-        - Demo/trial requests
+        - Budget or pricing questions
+        - Demo or trial requests
         - Comparison shopping
-        - Decision-maker involvement
+        - Decision-maker involvement (title shows budget authority)
         - Pain point mentions
 
-        Return a short bullet list, one signal per line, at most 5. If there are none, return exactly: None
+        Return a short bullet list, one signal per line, at most 5, each citing
+        what it is based on. If no signal is backed by the data, return exactly: None
         """
 
         signals_text = await self.think(signals_prompt)
