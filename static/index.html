@@ -306,9 +306,10 @@ function renderChrome() {
     `<a href="#${v}" ${v === current ? 'aria-current="page"' : ""}><span>${TITLES[v]}</span>${counts[v] != null ? `<span class="count">${counts[v]}</span>` : ""}</a>`
   ).join("");
 
-  const live = data.llm.provider === "claude";
+  const live = data.llm.provider !== "mock";
+  const provider = { claude: "Claude", deepseek: "DeepSeek" }[data.llm.provider] || data.llm.provider;
   $("#llm-badge").innerHTML = live
-    ? `<span class="dot live"></span><span><b>Agents run on Claude</b>${esc(data.llm.model)}</span>`
+    ? `<span class="dot live"></span><span><b>Agents run on ${esc(provider)}</b>${esc(data.llm.model)}</span>`
     : `<span class="dot mock"></span><span><b>Demo mode</b>No API key set, so live agent results are placeholders.</span>`;
 }
 
@@ -413,7 +414,7 @@ function leadForm() {
   return `<form class="panel" id="lead-form">
     <h2>Add a lead</h2>
     <p class="hint">The Lead Qualification agent scores it, finds buying signals and routes it to a team.</p>
-    ${data.llm.provider !== "claude" ? `<div class="notice">Demo mode: with no API key the agent returns a placeholder score of 50 for every lead.</div>` : ""}
+    ${data.llm.provider === "mock" ? `<div class="notice">Demo mode: with no API key the agent returns a placeholder score of 50 for every lead.</div>` : ""}
     <div class="form-grid">
       <div class="field"><label for="lf-email">Email</label><input id="lf-email" name="email" type="email" required placeholder="name@company.com"></div>
       <div class="field"><label for="lf-first">First name</label><input id="lf-first" name="first_name"></div>
@@ -479,7 +480,7 @@ function viewInbox() {
   const form = ui.emailFormOpen ? `<form class="panel" id="email-form">
     <h2>Analyze an email</h2>
     <p class="hint">Paste a customer email. The Email Intelligence agent reads its sentiment, files it, sets a priority and drafts a reply.</p>
-    ${data.llm.provider !== "claude" ? `<div class="notice">Demo mode: with no API key the agent labels every email neutral and drafts a placeholder reply.</div>` : ""}
+    ${data.llm.provider === "mock" ? `<div class="notice">Demo mode: with no API key the agent labels every email neutral and drafts a placeholder reply.</div>` : ""}
     <div class="form-grid">
       <div class="field"><label for="ef-from">From</label><input id="ef-from" name="sender" type="email" placeholder="customer@example.com"></div>
       <div class="field"><label for="ef-subject">Subject</label><input id="ef-subject" name="subject"></div>

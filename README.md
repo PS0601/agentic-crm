@@ -1,6 +1,6 @@
 # Agentic CRM
 
-A small CRM where AI agents do the busywork: scoring new leads, reading customer emails and drafting replies, and flagging deals and customers that need a person. It is a FastAPI backend with a built-in web dashboard, backed by PostgreSQL. The agents run on Claude.
+A small CRM where AI agents do the busywork: scoring new leads, reading customer emails and drafting replies, and flagging deals and customers that need a person. It is a FastAPI backend with a built-in web dashboard, backed by PostgreSQL. The agents run on Claude or DeepSeek.
 
 ![Dashboard overview](docs/dashboard-overview.png)
 
@@ -47,16 +47,21 @@ Open http://localhost:8000/dashboard. The raw API docs are at http://localhost:8
 
 `python seed_demo.py --reset` wipes all CRM tables and seeds again.
 
-### Turn on Claude
+### Turn on the AI
 
-Without an API key the app runs in demo mode: everything loads, but live agent results are placeholders (every lead scores 50, every email is neutral). The dashboard says so in the corner. To use Claude, put your key in `.env`:
+Without an API key the app runs in demo mode: everything loads, but live agent results are placeholders (every lead scores 50, every email is neutral). The dashboard says so in the corner. Put one provider's key in `.env`:
 
 ```
+# Claude
 ANTHROPIC_API_KEY=sk-ant-...
 # ANTHROPIC_MODEL=claude-sonnet-5-5   (optional)
+
+# or DeepSeek
+DEEPSEEK_API_KEY=...
+# DEEPSEEK_MODEL=deepseek-flash       (optional)
 ```
 
-Restart the server. The corner badge changes to "Agents run on Claude".
+If both keys are set, Claude is used. To force a provider, set `LLM_PROVIDER=claude`, `deepseek` or `mock`. Restart the server. The corner badge then shows which model the agents are running on.
 
 ## How it works
 
@@ -70,7 +75,7 @@ FastAPI  -- api/*.py        REST endpoints for leads, deals, customers, emails
 workflows/orchestrator.py   runs the agents and saves their results
         |
         v
-agents/*.py  ----> llm.py (Claude, or a mock if no key)
+agents/*.py  ----> llm.py (Claude, DeepSeek, or a mock)
         |
         v
 PostgreSQL (database/models.py)
@@ -98,7 +103,7 @@ api/          FastAPI routers
 database/     SQLAlchemy models and schema.sql
 workflows/    orchestrator that connects agents to the database
 static/       the dashboard (one HTML file, no build step)
-llm.py        picks Claude or the mock
+llm.py        picks Claude, DeepSeek or the mock
 seed_demo.py  demo data
 ```
 
