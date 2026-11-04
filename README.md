@@ -102,12 +102,4 @@ llm.py        picks Claude or the mock
 seed_demo.py  demo data
 ```
 
-## Current limits
-
-This is a working prototype, not a production system.
-
-- No login or access control. Do not expose it to the internet as is.
-- Redis, Celery, and Gmail or Calendar syncing are not implemented. The agents run as FastAPI background tasks, and emails are entered by hand.
-- Only Lead Qualification and Email Intelligence are wired into the dashboard. The other agents are reachable through the API.
-- Agent output depends on the model's answers. Treat scores and drafted replies as suggestions.
 
