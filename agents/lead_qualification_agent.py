@@ -41,11 +41,11 @@ class LeadQualificationAgent(BaseAgent):
         # Step 1: Enrich lead data
         enriched_data = await self.enrich_lead(lead_data)
 
-        # Step 2: Score the lead
-        score = await self.score_lead(enriched_data)
-
-        # Step 3: Identify buying signals
+        # Step 2: Identify buying signals (the score depends on them)
         signals = await self.identify_buying_signals(enriched_data)
+
+        # Step 3: Score the lead
+        score = await self.score_lead(enriched_data, signals)
 
         # Step 4: Route to appropriate team
         routing = await self.route_lead(score, signals)
@@ -114,24 +114,35 @@ class LeadQualificationAgent(BaseAgent):
 
         return enriched
 
-    async def score_lead(self, lead_data: Dict[str, Any]) -> int:
+    async def score_lead(self, lead_data: Dict[str, Any], signals: list = None) -> int:
         """Score lead from 0-100"""
 
+        found = "\n".join(f"- {x}" for x in (signals or [])) or "none found"
         scoring_prompt = f"""
-        Score this lead from 0-100 based on qualification criteria:
+        Score this lead from 0-100 for how urgently sales should follow up.
 
         Lead Data:
         {lead_data}
 
-        Scoring Criteria:
-        - Company size (25%): Enterprise > Large > Medium > Small
-        - Job title (25%): Executive > Director > Manager > Individual Contributor
-        - Industry (20%): Tech, Finance, Healthcare = high value
-        - Engagement (15%): Multiple touchpoints, content downloads
-        - Budget signals (15%): Mentions pricing, demo requests, timeline questions
+        Buying signals found:
+        {found}
 
-        Base the score only on the data above. Missing information should
-        lower your confidence, not be filled in with guesses.
+        How to score:
+        - Buying intent (about 40%): demo or pricing requests, a stated timeline,
+          active evaluation. This matters most.
+        - Seniority (about 30%): Executive > Director > Manager > Individual Contributor.
+        - Company fit (about 20%): larger companies and Tech, Finance or Healthcare
+          score higher. If the company size or industry is unknown, treat it as
+          average. Never lower the score just because something is missing.
+        - Engagement (about 10%): source and extra context.
+
+        Calibration:
+        - A senior decision-maker who explicitly asks for a demo, pricing or a
+          timeline is a hot lead: score 80 or higher.
+        - A senior person with no stated interest: roughly 50 to 65.
+        - A junior contact with no stated interest: below 40.
+
+        Use only the data above. Do not invent facts.
 
         Return ONLY the numeric score (0-100).
         """
