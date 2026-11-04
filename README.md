@@ -111,6 +111,3 @@ This is a working prototype, not a production system.
 - Only Lead Qualification and Email Intelligence are wired into the dashboard. The other agents are reachable through the API.
 - Agent output depends on the model's answers. Treat scores and drafted replies as suggestions.
 
-## Credits
-
-Started from [KlementMultiverse/ai-crm-agents](https://github.com/KlementMultiverse/ai-crm-agents) (MIT license). The dashboard, Claude integration, demo data, and bug fixes were added on top.
